@@ -53,7 +53,7 @@ unsigned int
 
 unsigned long int 
   // 
-  myBaseLine[4],
+  myCalibrated[4],
   myLaneTime[4];
 boolean
   myRaceOn    = 0,
@@ -142,13 +142,13 @@ void CalibrateLightSensors()
   
   for ( myLoop=0; myLoop < NUMSAMPLES; myLoop++ )
   {
-    myBaseLine[1] += analogRead(LANE1);
-    myBaseLine[2] += analogRead(LANE2);
-    myBaseLine[3] += analogRead(LANE3); 
+    myCalibrated[1] += analogRead(LANE1);
+    myCalibrated[2] += analogRead(LANE2);
+    myCalibrated[3] += analogRead(LANE3); 
   }
-  myBaseLine[1] = myBaseLine[1] / myLoop;
-  myBaseLine[2] = myBaseLine[2] / myLoop;
-  myBaseLine[3] = myBaseLine[3] / myLoop;
+  myCalibrated[1] = myCalibrated[1] / myLoop;
+  myCalibrated[2] = myCalibrated[2] / myLoop;
+  myCalibrated[3] = myCalibrated[3] / myLoop;
 }
 
 int CrossFinishLine( int myLane )
@@ -258,7 +258,7 @@ void setup()
   {
     myResults[ myLoop ]   = 0;
     myLaneDone[ myLoop ]  = 0;
-    myBaseLine[ myLoop ]  = 0;
+    myCalibrated[ myLoop ]  = 0;
     myLaneTime[ myLoop ]  = 0;    
   }
 
@@ -324,7 +324,7 @@ void loop()
       // then we assume it is a car crossing the finish line
   
       for ( oneLane=0; oneLane < 4; oneLane++ )
-        if (myLanes[oneLane] < ( myBaseLine[oneLane] ) / 3 * 2 )
+        if (myLanes[oneLane] < ( myCalibrated[oneLane] ) / 3 * 2 )
           if ( CrossFinishLine( oneLane ) )
             UpdateDisplay( myOutput, 1 ); 
 
