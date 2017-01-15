@@ -52,12 +52,14 @@ unsigned int
   myLanesDone = 0;
 
 unsigned long int 
-  // 
+  // stores the calibrated baseline for the lane sensors
   myCalibrated[4],
+  // as each car finishes, store its time in this guy
   myLaneTime[4];
 boolean
   myRaceOn    = 0,
   myRaceOver  = 0,
+  // as a lane finishes set this to true
   myLaneDone[4];
   
 void milli2human( char * myOutput, unsigned long int mSec )
@@ -108,6 +110,11 @@ void UpdateLED( unsigned int myOnOff )
 }
 
 void UpdateDisplay( char myDisplay[2][32], boolean myClear = 0 )
+/*
+ * This will eventually be rewritten to account for different types of displays
+ * At which point we'll set a constant for display type or some such thing
+ * Right now it assumes a 16x2 LCD in parallel mode
+ */
 {
   Serial.println( myDisplay[0] );
   Serial.println( myDisplay[1] );
