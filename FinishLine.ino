@@ -61,6 +61,23 @@ boolean
   myRaceOver  = 0,
   // as a lane finishes set this to true
   myLaneDone[4];
+
+// We need a few global variables specifically for 
+// rotating the display when the race is over
+
+const int 
+  FINISHFANCY   = 1,      // Set to 0 if you don't want rotating results after finish
+  FINISHSTATES  = 4,      // how many states are there at the finish?
+  FINISHROTDIS  = 3000;   // rotate display this many milliseconds
+
+boolean
+  myFinishRotate  = 0;
+  
+int
+  myFinishState = 1;      // keep track of which state we are in
+
+unsigned long int
+  myFinishRotTime = 0;    // last time we rotated the finish message
   
 void milli2human( char * myOutput, unsigned long int mSec )
 /*
@@ -158,6 +175,25 @@ void CalibrateLightSensors()
   myCalibrated[3] = myCalibrated[3] / myLoop;
 }
 
+void RaceResultsString( char * myString )
+{
+  char myTempStr[32];
+  
+  switch( myLanesDone ) 
+  {
+  case 1:
+    sprintf( myTempStr, "L%d", myResults[0] );
+    break;
+  case 2:
+    sprintf( myTempStr, "L%d L%d", myResults[0], myResults[1] );
+    break;
+  case 3:
+    sprintf( myTempStr, "L%d L%d L%d", myResults[0], myResults[1], myResults[2] );
+    break;
+  }
+  strcpy( myString, myTempStr );
+}
+  
 int CrossFinishLine( int myLane )
 // call me when a car reaches the finish line
 // return 0 if this car already crossed the finish line
@@ -196,18 +232,8 @@ int CrossFinishLine( int myLane )
   // basically too lazy to bother figuring out what I
   // was doing wrong - it was legit for C.
   // That's why I'm using myTempStr
-  
-  switch( myLanesDone ) {
-    case 1:
-      sprintf( myTempStr, "L%d", myResults[0] );
-      break;
-    case 2:
-      sprintf( myTempStr, "L%d L%d", myResults[0], myResults[1] );
-      break;
-    case 3:
-      sprintf( myTempStr, "L%d L%d L%d", myResults[0], myResults[1], myResults[2] );
-      break;
-  }
+
+  RaceResultsString( myTempStr );
 
   strcpy( myOutput[1], myTempStr );
   UpdateDisplay( myOutput, 1 );
@@ -226,11 +252,80 @@ void StartRace()
 
 void FinishRace()
 {
+  char
+    myTempStr[32];
+    
   myRaceOn    = 0;
   myRaceOver  = 1;
   // Maybe we could do something fancy
   // Like update the display every few seconds
   // With 1st, 2nd and 3rd place times
+
+/*         
+ * FINISHSTATES  = 4,      // how many states are there at the finish?
+ * FINISHROTDIS  = 3000;   // rotate display this many milliseconds
+ * boolean
+ *   myFinishRotate = 0;
+ * int
+ *    myFinishState = 1;      // keep track of which state we are in
+ * unsigned long int
+ *    myFinishRotTime = 0;    // last time we rotated the finish message
+ */
+
+ if (FINISHFANCY == 0)
+ {
+  // just display the results - no rotating
+  
+  strcpy( myOutput[0], "Race Results" );
+  RaceResultsString( myOutput[1] );
+  UpdateDisplay( myOutput, 1 );
+  
+ } else {
+  
+  // rotate the display  
+
+  if ( myFinishRotate == 0 ) 
+  {
+    myFinishRotTime = millis();
+    myFinishRotate  = 1;
+  }
+    
+  if ( millis() > myFinishRotTime + FINISHROTDIS )
+  {
+    myFinishRotate  = 0;
+    if ( myFinishState++ > FINISHSTATES )
+      myFinishState = 1;
+  }
+  
+  switch (myFinishState)
+  {
+      case 1:
+        strcpy( myOutput[0], "Race Results" );
+        RaceResultsString( myOutput[1] );
+        UpdateDisplay( myOutput, 1 );
+        break;
+     case 2:
+        strcpy( myOutput[0], "First Place" );
+        milli2human( myTempStr, myLaneTime[ myResults[0] ] );
+        sprintf( myOutput[1], "L%d %s", myResults[0], myTempStr );
+        UpdateDisplay( myOutput, 1 );
+        break;
+      case 3:
+        strcpy( myOutput[0], "Second Place" );
+        milli2human( myTempStr, myLaneTime[ myResults[1] ] );
+        sprintf( myOutput[1], "L%d %s", myResults[1], myTempStr );
+        UpdateDisplay( myOutput, 1 );
+        break;
+      case 4:
+        strcpy( myOutput[0], "Third Place" );
+        milli2human( myTempStr, myLaneTime[ myResults[2] ] );
+        sprintf( myOutput[1], "L%d %s", myResults[2], myTempStr );
+        UpdateDisplay( myOutput, 1 );
+        break;
+  }
+ }
+ UpdateDisplay( myOutput, 1 );
+ 
 }
 
 void OnYourMarks()
@@ -242,10 +337,13 @@ void OnYourMarks()
 
 void setup()
 {
-  myLanesDone = 0;
-  myRaceOn    = 0;
-  myRaceOver  = 0;
   int myLoop  = 0;
+
+  myLanesDone     = 0;
+  myRaceOn        = 0;
+  myRaceOver      = 0;
+  myFinishState   = 1;
+  myFinishRotate  = 0;
   
   // Serial port setup for debug
   Serial.begin(9600);
