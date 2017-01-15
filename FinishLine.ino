@@ -257,74 +257,61 @@ void FinishRace()
     
   myRaceOn    = 0;
   myRaceOver  = 1;
-  // Maybe we could do something fancy
-  // Like update the display every few seconds
-  // With 1st, 2nd and 3rd place times
 
-/*         
- * FINISHSTATES  = 4,      // how many states are there at the finish?
- * FINISHROTDIS  = 3000;   // rotate display this many milliseconds
- * boolean
- *   myFinishRotate = 0;
- * int
- *    myFinishState = 1;      // keep track of which state we are in
- * unsigned long int
- *    myFinishRotTime = 0;    // last time we rotated the finish message
- */
-
- if (FINISHFANCY == 0)
- {
-  // just display the results - no rotating
-  
-  strcpy( myOutput[0], "Race Results" );
-  RaceResultsString( myOutput[1] );
-  UpdateDisplay( myOutput, 1 );
-  
- } else {
-  
-  // rotate the display  
-
-  if ( myFinishRotate == 0 ) 
+  if (FINISHFANCY == 0)
   {
-    myFinishRotTime = millis();
-    myFinishRotate  = 1;
-  }
+    // just display the results - no rotating
     
-  if ( millis() > myFinishRotTime + FINISHROTDIS )
-  {
-    myFinishRotate  = 0;
-    if ( myFinishState++ > FINISHSTATES )
-      myFinishState = 1;
-  }
+    strcpy( myOutput[0], "Race Results" );
+    RaceResultsString( myOutput[1] );
+    UpdateDisplay( myOutput, 1 );
+    
+  } else {
+    
+    // rotate the display  
   
-  switch (myFinishState)
-  {
-      case 1:
-        strcpy( myOutput[0], "Race Results" );
-        RaceResultsString( myOutput[1] );
-        UpdateDisplay( myOutput, 1 );
-        break;
-     case 2:
-        strcpy( myOutput[0], "First Place" );
-        milli2human( myTempStr, myLaneTime[ myResults[0] ] );
-        sprintf( myOutput[1], "L%d %s", myResults[0], myTempStr );
-        UpdateDisplay( myOutput, 1 );
-        break;
-      case 3:
-        strcpy( myOutput[0], "Second Place" );
-        milli2human( myTempStr, myLaneTime[ myResults[1] ] );
-        sprintf( myOutput[1], "L%d %s", myResults[1], myTempStr );
-        UpdateDisplay( myOutput, 1 );
-        break;
-      case 4:
-        strcpy( myOutput[0], "Third Place" );
-        milli2human( myTempStr, myLaneTime[ myResults[2] ] );
-        sprintf( myOutput[1], "L%d %s", myResults[2], myTempStr );
-        UpdateDisplay( myOutput, 1 );
-        break;
+    if ( myFinishRotate == 0 ) 
+    {
+      myFinishRotTime = millis();
+      myFinishRotate  = 1;
+    }
+      
+    if ( millis() > myFinishRotTime + FINISHROTDIS )
+    {
+      myFinishRotate  = 0;
+    
+      switch (myFinishState)
+      {
+          case 1:
+            strcpy( myOutput[0], "Race Results" );
+            RaceResultsString( myOutput[1] );
+            UpdateDisplay( myOutput, 1 );
+            break;
+         case 2:
+            strcpy( myOutput[0], "First Place" );
+            milli2human( myTempStr, myLaneTime[ myResults[0] ] );
+            sprintf( myOutput[1], "L%d %s", myResults[0], myTempStr );
+            UpdateDisplay( myOutput, 1 );
+            break;
+          case 3:
+            strcpy( myOutput[0], "Second Place" );
+            milli2human( myTempStr, myLaneTime[ myResults[1] ] );
+            sprintf( myOutput[1], "L%d %s", myResults[1], myTempStr );
+            UpdateDisplay( myOutput, 1 );
+            break;
+          case 4:
+            strcpy( myOutput[0], "Third Place" );
+            milli2human( myTempStr, myLaneTime[ myResults[2] ] );
+            sprintf( myOutput[1], "L%d %s", myResults[2], myTempStr );
+            UpdateDisplay( myOutput, 1 );
+            break;
+      }
+      if ( myFinishState++ > FINISHSTATES )
+        myFinishState = 1;
+    }
   }
- }
- UpdateDisplay( myOutput, 1 );
+   
+  UpdateDisplay( myOutput, 1 );
  
 }
 
