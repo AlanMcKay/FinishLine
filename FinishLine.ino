@@ -6,9 +6,11 @@
  * Hardware required :
  *  - Arduino Uno or Sparkfun Redboard
  *  - 16x2 LCD connected in parallel connected as per SIK circuit 15
+ *  - potentiometer also as per SIK circuit 15
  *  - simple button from Sparkfun Inventor's Kit (SIK circuit 6)
- *  - 3 x SF QRD1114 Optical Detector https://www.sparkfun.com/products/246
- * Circuit diagram to be provided at a later date. 
+ *  - 3 x SF QRD1114 Optical Detector https://www.sparkfun.com/products/246 
+ *    - connected as per details in that link
+ * Full circuit diagram to be provided at a later date. 
  * 
  */
 
