@@ -1,6 +1,6 @@
 
 /*
- * 2017.01.14 - alan.mckay@gmail.com
+ * 2017.01.15 - alan.mckay@gmail.com
  * 
  * Program to run a Cub Car / Scout Truck track finish line
  * Hardware required :
