@@ -176,6 +176,10 @@ void CalibrateLightSensors()
 }
 
 void RaceResultsString( char * myString )
+// returns the race results up to this point
+// e.g. "L2" if only lane 2 has finished
+// or "L2 L1" if lane 2 was in first, and lane 1 next
+// or "L2 L1 L3" if all 3 cars are in
 {
   char myTempStr[32];
   
@@ -223,19 +227,7 @@ int CrossFinishLine( int myLane )
   // put this car's time in the output buffer
   
   milli2human( myOutput[0], myLaneTime[myLane] );
-
-  // Put results to this point in 2nd line of output buffer
-  // I could probably do this by assemblying the string
-  // on the fly - in fact I tried that at first but hit
-  // upon an interesting compiler bug that took me a good
-  // hour to trace back to my call to sprintf.  I am 
-  // basically too lazy to bother figuring out what I
-  // was doing wrong - it was legit for C.
-  // That's why I'm using myTempStr
-
-  RaceResultsString( myTempStr );
-
-  strcpy( myOutput[1], myTempStr );
+  RaceResultsString( myOutput[1] );
   UpdateDisplay( myOutput, 1 );
 
   return 1;
