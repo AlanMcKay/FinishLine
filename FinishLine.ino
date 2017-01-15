@@ -1,0 +1,341 @@
+
+/*
+ * 2017.01.14 - alan.mckay@gmail.com
+ * 
+ * Program to run a Cub Car / Scout Truck track finish line
+ * Hardware required :
+ *  - Arduino Uno or Sparkfun Redboard
+ *  - 16x2 LCD connected in parallel connected as per SIK circuit 15
+ *  - simple button from Sparkfun Inventor's Kit (SIK circuit 6)
+ *  - 3 x SF QRD1114 Optical Detector https://www.sparkfun.com/products/246
+ * Circuit diagram to be provided at a later date. 
+ * 
+ */
+
+#include <stdio.h>
+#include <LiquidCrystal.h>
+LiquidCrystal lcd(12,11,5,4,3,2);
+
+// the button is moved from SIK circuit 6 to pin 10
+const int BUTTONPIN  = 10;  // pushbutton pin to reset
+const int STARTPIN    = 7;  // the door sensor to start the race
+const int ledPin      = 9;  // LED pin
+const int LANE1       = A0;
+const int LANE2       = A1;
+const int LANE3       = A2;
+const int NUMLANES    = 3;    // Not used - maybe next release
+const int NUMSAMPLES  = 3000; // used for calibrating the light sensors
+
+unsigned long int 
+  milliStart  = 0;    // timestamp of when the race starts
+
+char          myOutput[2][32];
+
+// Important Note : Arduino uses 0-based arrays like C, but
+// I am being lazy and not accounting for that - I simply use
+// arrays of 4 and do not use the 0 index.  That means this 
+// really would not be suitable for a 4 lane track
+
+// An earlier version of the program had a reason for tracking how
+// many resets there were.  This version really has no reason.
+unsigned int  
+  myResets = 0,
+  // myResults stores lane numbers.
+  // [0] is the winner
+  // [1] is 2nd place
+  // [2] is 3rd place
+  // yes, I use the 0 index on this one
+  myResults[4], 
+  // when myLanesDone == NUMLANES all cars are in
+  myLanesDone = 0;
+
+unsigned long int 
+  // 
+  myBaseLine[4],
+  myLaneTime[4];
+boolean
+  myRaceOn    = 0,
+  myRaceOver  = 0,
+  myLaneDone[4];
+  
+void milli2human( char * myOutput, unsigned long int mSec )
+/*
+ * converts a number of milliseconds to a human readable string
+ * H:MM:SS.MMM
+ * Hours:Minutes:Seconds.Milliseconds
+ * 
+ * Input :  myOutput - buffer to put it into
+ *          milliSec - number of milliseconds
+ */
+{
+  int myHour  = 0,
+      myMin   = 0,
+      mySec   = 0,
+      myMilli = 0;
+
+  // Just keep using modulo to strip off the remainder
+  
+  myMilli = mSec % 1000;
+  mSec    = mSec / 1000;
+  mySec   = mSec % 60;
+  mSec    = mSec / 60;
+  myMin   = mSec % 60;
+  mSec    = mSec / 60;
+  myHour  = mSec;
+  
+  sprintf( myOutput, "%d:%02d:%02d.%03d", myHour, myMin, mySec, myMilli );
+}
+
+void UpdateLED( unsigned int myOnOff )
+/*
+ * Just turn the LED on or off according to the state
+ * Sloppy use of a function, yeah
+ */
+{
+  switch( myOnOff ) {
+      case 0:
+        digitalWrite( ledPin, LOW );
+        break;
+      case 1:
+        digitalWrite( ledPin, HIGH );
+        break;
+      default:
+        digitalWrite( ledPin, LOW );
+        break;
+  } 
+}
+
+void UpdateDisplay( char myDisplay[2][32], boolean myClear = 0 )
+{
+  Serial.println( myDisplay[0] );
+  Serial.println( myDisplay[1] );
+  if ( myClear )
+    lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print( myDisplay[0] );
+  lcd.setCursor(0,1);
+  lcd.print( myDisplay[1] );
+}
+
+void CalibrateLightSensors()
+// We just loop NUMSAMPLES times and take a sample for each iteration
+// Compute the average of the samples and use that for our baseline
+{
+  unsigned long int
+    myLoop = 0;
+  
+  // Set up the light sensors for the lanes
+  pinMode(LANE1, INPUT);
+  pinMode(LANE2, INPUT);
+  pinMode(LANE3, INPUT);
+
+  // establishing lighting level baselines  
+  sprintf( myOutput[0], "Calibrating" );
+  sprintf( myOutput[1], "Sensors" );
+  UpdateDisplay( myOutput, 1 );
+
+  // Be careful not to set NUMSAMPLE too high or
+  // you could end up outside the range of 
+  // unsigned long int (4 bytes IIRC)
+  
+  for ( myLoop=0; myLoop < NUMSAMPLES; myLoop++ )
+  {
+    myBaseLine[1] += analogRead(LANE1);
+    myBaseLine[2] += analogRead(LANE2);
+    myBaseLine[3] += analogRead(LANE3); 
+  }
+  myBaseLine[1] = myBaseLine[1] / myLoop;
+  myBaseLine[2] = myBaseLine[2] / myLoop;
+  myBaseLine[3] = myBaseLine[3] / myLoop;
+}
+
+int CrossFinishLine( int myLane )
+// call me when a car reaches the finish line
+// return 0 if this car already crossed the finish line
+// otherwise return 1
+{
+  char myTempStr[32];
+
+  // check to make sure the race is running
+  if ( myRaceOn == 0 )
+    return 0;
+
+  // return if this lane already crossed finish line
+  
+  if ( myLaneDone[ myLane ] )
+    return 0;
+
+  // record this lane's time
+  myLaneTime[myLane]        = millis() - milliStart;
+
+  // set this lane as done
+  myLaneDone[myLane]        = 1;
+
+  // record the result and increment done lanes
+  myResults[myLanesDone++]  = myLane;
+  
+  // put this car's time in the output buffer
+  
+  milli2human( myOutput[0], myLaneTime[myLane] );
+
+  // Put results to this point in 2nd line of output buffer
+  // I could probably do this by assemblying the string
+  // on the fly - in fact I tried that at first but hit
+  // upon an interesting compiler bug that took me a good
+  // hour to trace back to my call to sprintf.  I am 
+  // basically too lazy to bother figuring out what I
+  // was doing wrong - it was legit for C.
+  // That's why I'm using myTempStr
+  
+  switch( myLanesDone ) {
+    case 1:
+      sprintf( myTempStr, "L%d", myResults[0] );
+      break;
+    case 2:
+      sprintf( myTempStr, "L%d L%d", myResults[0], myResults[1] );
+      break;
+    case 3:
+      sprintf( myTempStr, "L%d L%d L%d", myResults[0], myResults[1], myResults[2] );
+      break;
+  }
+
+  strcpy( myOutput[1], myTempStr );
+  UpdateDisplay( myOutput, 1 );
+
+  return 1;
+}
+
+void StartRace()
+{
+  myRaceOn    = 1;
+  myRaceOver  = 0;
+  milliStart  = millis();
+  strcpy( myOutput[1], "Go!" );
+  UpdateDisplay( myOutput, 1 );
+}
+
+void FinishRace()
+{
+  myRaceOn    = 0;
+  myRaceOver  = 1;
+  // Maybe we could do something fancy
+  // Like update the display every few seconds
+  // With 1st, 2nd and 3rd place times
+}
+
+void OnYourMarks()
+{
+  strcpy( myOutput[0], "On your marks ..." );
+  strcpy( myOutput[1], "Get set ..." );
+  UpdateDisplay( myOutput, 1 );
+}
+
+void setup()
+{
+  myLanesDone = 0;
+  myRaceOn    = 0;
+  myRaceOver  = 0;
+  int myLoop  = 0;
+  
+  // Serial port setup for debug
+  Serial.begin(9600);
+
+  // Initialize the LCD
+  lcd.begin(16, 2);
+  lcd.clear();
+
+  // Set up the pushbutton pins to be an input:
+  pinMode(BUTTONPIN, INPUT);
+  pinMode(STARTPIN, INPUT);
+  
+  // Set up the LED pin to be an output:
+  pinMode(ledPin, OUTPUT);      
+
+  // Initialize some vars
+  for ( myLoop=0; myLoop < 4; myLoop++ )
+  {
+    myResults[ myLoop ]   = 0;
+    myLaneDone[ myLoop ]  = 0;
+    myBaseLine[ myLoop ]  = 0;
+    myLaneTime[ myLoop ]  = 0;    
+  }
+
+  CalibrateLightSensors();
+
+  // Flash the LED and say "Reset"
+  // Kind of redundant but whatever ...
+  
+  UpdateLED(1);
+  sprintf( myOutput[0], "Reset" );
+  sprintf( myOutput[1], " " );
+  UpdateDisplay( myOutput, 1 );
+  delay(1000);
+  UpdateLED(0);
+
+  // clear the output buffers
+  sprintf( myOutput[0], "                               " );
+  sprintf( myOutput[1], "                               " );
+  UpdateDisplay( myOutput, 1 ); 
+  myResets++;
+
+}
+
+void loop()
+{
+  int myButton  = 0,
+      myStart   = 0,
+      oneLane   = 0,
+      myLanes[4];
+
+  // read all the input sensors
+  myLanes[1]  = analogRead(LANE1);
+  myLanes[2]  = analogRead(LANE2);
+  myLanes[3]  = analogRead(LANE3);
+  myButton    = digitalRead(BUTTONPIN);
+  myStart     = digitalRead(STARTPIN);
+
+  // First check for reset button
+  
+  if (myButton == LOW)
+  {
+    setup();
+    UpdateLED(1);
+    delay(100);
+    UpdateLED(0);
+  }
+
+  // if the race is over the reset button is required
+  if ( myRaceOver == 1 )
+  {
+    FinishRace();
+  } else
+  {
+    // check to see if the race has started
+    if ( myRaceOn == 0 )
+    {
+      OnYourMarks();
+      if (myStart == LOW)
+        StartRace();
+    } else 
+    {
+      // if the light entering the lane is 2/3 of the calibrated baseline
+      // then we assume it is a car crossing the finish line
+  
+      for ( oneLane=0; oneLane < 4; oneLane++ )
+        if (myLanes[oneLane] < ( myBaseLine[oneLane] ) / 3 * 2 )
+          if ( CrossFinishLine( oneLane ) )
+            UpdateDisplay( myOutput, 1 ); 
+
+      // update display line 0 with running time
+
+      milli2human( myOutput[0], millis() - milliStart );
+      UpdateDisplay( myOutput, 1 );
+
+      // check to see if race is over
+    
+      if ( myLanesDone == NUMLANES )
+        FinishRace();
+    }
+  }
+
+}
