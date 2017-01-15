@@ -161,6 +161,7 @@ void CalibrateLightSensors()
 int CrossFinishLine( int myLane )
 // call me when a car reaches the finish line
 // return 0 if this car already crossed the finish line
+// or if the race has not yet started
 // otherwise return 1
 {
   char myTempStr[32];
