@@ -264,10 +264,10 @@ void setup()
   // Initialize some vars
   for ( myLoop=0; myLoop < 4; myLoop++ )
   {
-    myResults[ myLoop ]   = 0;
-    myLaneDone[ myLoop ]  = 0;
+    myResults[ myLoop ]     = 0;
+    myLaneDone[ myLoop ]    = 0;
     myCalibrated[ myLoop ]  = 0;
-    myLaneTime[ myLoop ]  = 0;    
+    myLaneTime[ myLoop ]    = 0;    
   }
 
   CalibrateLightSensors();
@@ -331,7 +331,7 @@ void loop()
       // if the light entering the lane is 2/3 of the calibrated baseline
       // then we assume it is a car crossing the finish line
   
-      for ( oneLane=0; oneLane < 4; oneLane++ )
+      for ( oneLane=1; oneLane < 4; oneLane++ )
         if (myLanes[oneLane] < ( myCalibrated[oneLane] ) / 3 * 2 )
           if ( CrossFinishLine( oneLane ) )
             UpdateDisplay( myOutput, 1 ); 
