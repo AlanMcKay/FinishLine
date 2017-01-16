@@ -292,6 +292,7 @@ void FinishRace()
             UpdateDisplay( myOutput, 1 );
             break;
           case 4:
+            // I am not sure why but this one stays twice as long as the others
             strcpy( myOutput[0], "Third Place" );
             milli2human( myTempStr, myLaneTime[ myResults[2] ] );
             sprintf( myOutput[1], "L%d %s", myResults[2], myTempStr );
