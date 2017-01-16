@@ -10,6 +10,8 @@
  *  - simple button from Sparkfun Inventor's Kit (SIK circuit 6)
  *  - 3 x SF QRD1114 Optical Detector https://www.sparkfun.com/products/246 
  *    - connected as per details in that link
+ *  - magnetic door sensor as per 
+ *    http://randomnerdtutorials.com/monitor-your-door-using-magnetic-reed-switch-and-arduino/ 
  * Full circuit diagram to be provided at a later date. 
  * 
  */
