@@ -267,7 +267,7 @@ void FinishRace()
       myFinishRotTime = millis();
       myFinishRotate  = 1;
     }
-      
+
     if ( millis() > myFinishRotTime + FINISHROTDIS )
     {
       myFinishRotate  = 0;
@@ -279,18 +279,21 @@ void FinishRace()
             RaceResultsString( myOutput[1] );
             UpdateDisplay( myOutput, 1 );
             break;
+            
          case 2:
             strcpy( myOutput[0], "First Place" );
             milli2human( myTempStr, myLaneTime[ myResults[0] ] );
             sprintf( myOutput[1], "L%d %s", myResults[0], myTempStr );
             UpdateDisplay( myOutput, 1 );
             break;
+            
           case 3:
             strcpy( myOutput[0], "Second Place" );
             milli2human( myTempStr, myLaneTime[ myResults[1] ] );
             sprintf( myOutput[1], "L%d %s", myResults[1], myTempStr );
             UpdateDisplay( myOutput, 1 );
             break;
+            
           case 4:
             // I am not sure why but this one stays twice as long as the others
             strcpy( myOutput[0], "Third Place" );
@@ -299,9 +302,14 @@ void FinishRace()
             UpdateDisplay( myOutput, 1 );
             break;
       }
+
+      // change states for next time
+      
       if ( myFinishState++ > FINISHSTATES )
         myFinishState = 1;
+
     }
+      
   }
    
   UpdateDisplay( myOutput, 1 );
