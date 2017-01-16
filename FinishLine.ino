@@ -384,6 +384,7 @@ void loop()
       myLanes[4];
 
   // read all the input sensors
+  
   myLanes[1]  = analogRead(LANE1);
   myLanes[2]  = analogRead(LANE2);
   myLanes[3]  = analogRead(LANE3);
@@ -401,12 +402,14 @@ void loop()
   }
 
   // if the race is over the reset button is required
+  
   if ( myRaceOver == 1 )
   {
     FinishRace();
   } else
   {
     // check to see if the race has started
+    
     if ( myRaceOn == 0 )
     {
       OnYourMarks();
@@ -414,8 +417,11 @@ void loop()
         StartRace();
     } else 
     {
+      
       // if the light entering the lane is 2/3 of the calibrated baseline
       // then we assume it is a car crossing the finish line
+      // Note we do not check for ties!  Would be great to
+      // augment this code to do that
   
       for ( oneLane=1; oneLane < 4; oneLane++ )
         if (myLanes[oneLane] < ( myCalibrated[oneLane] ) / 3 * 2 )
