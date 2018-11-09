@@ -1,6 +1,7 @@
 
 /*
  * 2017.01.15 - alan.mckay@gmail.com
+ * 2018.11.08 - minor updates to recommend switch to HW interrupts
  * 
  * Program to run a Cub Car / Scout Truck track finish line
  * Hardware required :
