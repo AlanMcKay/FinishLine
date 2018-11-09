@@ -425,7 +425,7 @@ void loop()
       // Note we do not check for ties!  Would be great to
       // augment this code to do that
       
-      // 2018.11.07 - replace this loop with a way to launch 
+      // 2018.11.08 - replace this loop with a way to launch 
       // hardware interrupts for each of the lane sensors and
       // then you don't have to worry about ties.
   
